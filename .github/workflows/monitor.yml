@@ -1,0 +1,51 @@
+name: 蓝桥杯通知监控
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 运行监控
+        env:
+          DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+          ENABLE_DINGTALK: "true"
+          ENABLE_FEISHU: "false"
+        run: |
+          python main.py
+
+      - name: 检查数据文件是否更新
+        id: check_update
+        run: |
+          if git diff --name-only | grep -q "lanqiao_data.json"; then
+            echo "updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 提交数据文件
+        if: steps.check_update.outputs.updated == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add lanqiao_data.json
+          git commit -m "Update lanqiao_data.json"
+          git push

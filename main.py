@@ -17,6 +17,7 @@ class LanQiaoMonitor:
         data_file="lanqiao_data.json",
         enable_dingtalk=True,
         enable_feishu=True,
+        use_github_secrets=False,
     ):
         """
         初始化监控器
@@ -24,17 +25,16 @@ class LanQiaoMonitor:
         :param data_file: 存储历史数据的文件
         :param enable_dingtalk: 是否启用钉钉通知
         :param enable_feishu: 是否启用飞书通知
+        :param use_github_secrets: 是否使用GitHub Secrets进行数据持久化
         """
         self.url = url
         self.enable_dingtalk = enable_dingtalk
         self.enable_feishu = enable_feishu
+        self.use_github_secrets = use_github_secrets
 
-        # 获取脚本所在的目录
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        # 将数据文件路径设为脚本目录下的文件
         self.data_file = os.path.join(script_dir, data_file)
 
-        # 配置日志
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
@@ -64,6 +64,12 @@ class LanQiaoMonitor:
 
     def load_saved_data(self):
         """加载保存的历史数据"""
+        if self.use_github_secrets:
+            return self._load_from_secrets()
+        return self._load_from_file()
+
+    def _load_from_file(self):
+        """从文件加载历史数据"""
         if os.path.exists(self.data_file):
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
@@ -73,7 +79,26 @@ class LanQiaoMonitor:
                 return None
         return None
 
+    def _load_from_secrets(self):
+        """从GitHub Secrets加载历史数据"""
+        encoded_data = os.environ.get("LANQIAO_DATA")
+        if encoded_data:
+            try:
+                decoded_data = base64.b64decode(encoded_data).decode("utf-8")
+                return json.loads(decoded_data)
+            except Exception as e:
+                print(f"从Secrets加载数据失败: {e}")
+                return None
+        print("Secrets中没有存储历史数据")
+        return None
+
     def save_data(self, data):
+        """保存数据"""
+        if self.use_github_secrets:
+            self._save_to_secrets(data)
+        self._save_to_file(data)
+
+    def _save_to_file(self, data):
         """保存数据到文件"""
         try:
             with open(self.data_file, "w", encoding="utf-8") as f:
@@ -81,6 +106,18 @@ class LanQiaoMonitor:
             print(f"数据已保存到 {self.data_file}")
         except Exception as e:
             print(f"保存数据失败: {e}")
+
+    def _save_to_secrets(self, data):
+        """保存数据到环境变量（供GitHub Action后续步骤使用）"""
+        try:
+            json_str = json.dumps(data, ensure_ascii=False)
+            encoded_data = base64.b64encode(json_str.encode("utf-8")).decode("utf-8")
+            print(f"::set-output name=lanqiao_data::{encoded_data}")
+            with open(os.environ.get("GITHUB_OUTPUT", "/dev/null"), "a") as f:
+                f.write(f"lanqiao_data={encoded_data}\n")
+            print("数据已准备好保存到GitHub Secrets")
+        except Exception as e:
+            print(f"准备保存数据到Secrets失败: {e}")
 
     def find_new_content(self, old_data, new_data):
         """
@@ -427,35 +464,17 @@ class LanQiaoMonitor:
 
 
 if __name__ == "__main__":
-    # 配置参数
     url = "https://www.guoxinlanqiao.com/api/news/find?status=1&project=dasai&progid=20&pageno=1&pagesize=10"
 
-    os.environ["DINGTALK_TOKEN"] = (
-        "****************************************"  # 替换为实际的钉钉机器人令牌
-    )
-    os.environ["DINGTALK_SECRET"] = (
-        "****************************************"  # 替换为实际的钉钉机器人密钥
-    )
+    enable_dingtalk = os.environ.get("ENABLE_DINGTALK", "true").lower() == "true"
+    enable_feishu = os.environ.get("ENABLE_FEISHU", "false").lower() == "true"
 
-    # 设置环境变量用于飞书通知
-    os.environ["FEISHU_BOT_URL"] = (
-        "https://open.feishu.cn/open-apis/bot/v2/hook/***************************"
-    )
-    os.environ["FEISHU_BOT_SECRET"] = "******************"
-
-    # 创建监控器实例，可以选择启用或禁用钉钉和飞书通知
     monitor = LanQiaoMonitor(
         url,
-        enable_dingtalk=True,  # 设置为False可禁用钉钉通知
-        enable_feishu=True,  # 设置为False可禁用飞书通知
+        enable_dingtalk=enable_dingtalk,
+        enable_feishu=enable_feishu,
+        use_github_secrets=False,
     )
 
-    # 打印欢迎信息
     monitor.print_welcome()
-
-    # 测试通知功能
-    # monitor.test_dingtalk_notification()
-    # monitor.test_feishu_notification()
-
-    # 运行监控器
     monitor.run()
