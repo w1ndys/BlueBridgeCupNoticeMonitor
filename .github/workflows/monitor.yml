@@ -26,10 +26,8 @@ jobs:
         env:
           DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
           DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
-          ENABLE_DINGTALK: "true"
-          ENABLE_FEISHU: "false"
-        run: |
-          python main.py
+        run: uv run python main.py
+
 
       - name: 检查数据文件是否更新
         id: check_update
