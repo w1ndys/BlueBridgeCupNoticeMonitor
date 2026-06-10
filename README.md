@@ -74,12 +74,12 @@ uv sync
 
 | 变量名 | 是否必需 | 说明 |
 |--------|----------|------|
-| `DINGTALK_TOKEN` | 钉钉启用时必需 | 钉钉机器人 Webhook 的 `access_token` |
-| `DINGTALK_SECRET` | 钉钉启用时必需 | 钉钉机器人的加签密钥 |
-| `FEISHU_BOT_URL` | 飞书启用时必需 | 飞书自定义机器人 Webhook 完整地址 |
-| `FEISHU_BOT_SECRET` | 飞书启用时必需 | 飞书机器人的签名密钥 |
-| `ENABLE_DINGTALK` | 可选 | 是否启用钉钉推送，默认 `true` |
-| `ENABLE_FEISHU` | 可选 | 是否启用飞书推送，默认 `false` |
+| `DINGTALK_TOKEN` | 启用钉钉时 | 钉钉机器人 Webhook 的 `access_token` |
+| `DINGTALK_SECRET` | 启用钉钉时 | 钉钉机器人的加签密钥 |
+| `FEISHU_BOT_URL` | 启用飞书时 | 飞书自定义机器人 Webhook 完整地址 |
+| `FEISHU_BOT_SECRET` | 启用飞书时 | 飞书机器人的签名密钥 |
+
+> 系统会自动检测：只要某渠道的 webhook 地址和签名密钥均存在，即视为已启用该渠道，无需额外开关。
 
 ### 运行
 
@@ -87,8 +87,6 @@ uv sync
 # 示例：Linux / macOS
 export DINGTALK_TOKEN="your_token"
 export DINGTALK_SECRET="your_secret"
-export ENABLE_DINGTALK="true"
-export ENABLE_FEISHU="false"
 
 uv run python main.py
 ```
@@ -135,7 +133,7 @@ on:
 crontab -e
 
 # 每 30 分钟检查一次
-*/30 * * * * DINGTALK_TOKEN="your_token" DINGTALK_SECRET="your_secret" ENABLE_DINGTALK="true" ENABLE_FEISHU="false" /path/to/project/.venv/bin/python /path/to/project/main.py >> /var/log/lanqiao_monitor.log 2>&1
+*/30 * * * * DINGTALK_TOKEN="your_token" DINGTALK_SECRET="your_secret" /path/to/project/.venv/bin/python /path/to/project/main.py >> /var/log/lanqiao_monitor.log 2>&1
 ```
 
 ---
@@ -154,8 +152,7 @@ crontab -e
 1. 在飞书群中添加**自定义机器人**，选择签名校验
 2. 将 Webhook 完整地址填入 `FEISHU_BOT_URL`
 3. 将签名密钥填入 `FEISHU_BOT_SECRET`
-4. 运行前设置环境变量 `ENABLE_FEISHU="true"`
-5. 参考 [飞书开放平台文档](https://open.feishu.cn/document/ukTMukTMukTM/ucTM5YjL3ETO24yNxkjN) 了解更多
+4. 参考 [飞书开放平台文档](https://open.feishu.cn/document/ukTMukTMukTM/ucTM5YjL3ETO24yNxkjN) 了解更多
 
 ---
 
@@ -166,7 +163,7 @@ crontab -e
 ```python
 from src.notifier.factory import create_notifiers
 
-notifiers = create_notifiers(enable_dingtalk=True, enable_feishu=False)
+notifiers = create_notifiers()
 for n in notifiers:
     n.send_test()
 ```

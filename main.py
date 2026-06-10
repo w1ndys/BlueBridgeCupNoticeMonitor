@@ -34,15 +34,9 @@ def main() -> None:
 
     print(BANNER)
 
-    enable_dingtalk = os.environ.get("ENABLE_DINGTALK", "true").lower() == "true"
-    enable_feishu = os.environ.get("ENABLE_FEISHU", "false").lower() == "true"
-
     fetcher = Fetcher(API_URL)
     repository = FileRepository(DATA_FILE)
-    notifiers = create_notifiers(
-        enable_dingtalk=enable_dingtalk,
-        enable_feishu=enable_feishu,
-    )
+    notifiers = create_notifiers()
 
     monitor = Monitor(
         fetcher=fetcher,
