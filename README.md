@@ -1,6 +1,6 @@
 # 🏆 蓝桥杯通知监控系统
 
-[![GitHub Stars](https://img.shields.io/github/stars/yourusername/lanqiao-notifier?style=for-the-badge)](https://github.com/yourusername/lanqiao-notifier/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/w1ndys/BlueBridgeCupNoticeMonitor?style=for-the-badge)](https://github.com/w1ndys/BlueBridgeCupNoticeMonitor/stargazers)
 [![Python Version](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 
 > 实时监控蓝桥杯大赛官方通知的自动化解决方案
@@ -21,7 +21,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/lanqiao-notifier.git
+git clone https://github.com/w1ndys/BlueBridgeCupNoticeMonitor.git
 
 # 安装依赖
 pip install -r requirements.txt
